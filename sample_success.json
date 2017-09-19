@@ -1,0 +1,10 @@
+{
+  "pipelineStatus": "SUCCESS",
+  "buildInfo": {
+    "pipelineName": "upgrade-tile-ert",
+    "buildNumber": "1",
+    "buildUrl": "<T3_Concourse_Host>/builds/1221",
+    "buildGlobalIdentifier": "1221",
+    "jobName": "upload-and-stage-tile"
+  }
+}

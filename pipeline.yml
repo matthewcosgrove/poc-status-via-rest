@@ -1,0 +1,81 @@
+jobs:
+- name: poc-upload-and-stage-tile-job
+  serial: true
+  plan:
+  - aggregate:
+    - task: will-fail
+      <<: *scriptToMockFailure
+      on_failure:
+        put: pipeline-status-writer-api
+        params:
+          headers:
+            Content-Type: application/json
+          json: {
+            pipelineStatus: FAILED,
+            <<: *buildInfo
+            }
+    - task: will-succeed
+      <<: *scriptToMockSuccess
+      on_success:
+        put: pipeline-status-writer-api
+        params:
+          headers:
+            Content-Type: application/json
+          json: {
+            pipelineStatus: SUCCESS,
+            <<: *buildInfo
+            }
+
+buildInfo: &buildInfo
+  buildInfo: {
+    pipelineName: "{BUILD_PIPELINE_NAME}",
+    jobName: "{BUILD_JOB_NAME}",
+    buildGlobalIdentifier: "{BUILD_ID}",
+    buildNumber: "{BUILD_NAME}",
+    buildUrl: "{ATC_EXTERNAL_URL}/builds/{BUILD_ID}"
+  }
+
+resource_types:
+- name: http-api
+  type: docker-image
+  source:
+    repository: aequitas/http-api-resource
+    tag: latest
+
+resources:
+- name: pipeline-status-writer-api
+  type: http-api
+  source:
+    uri: https://echo-server.vanilla.coke.cf-app.com
+    method: POST
+    ssl_verify: false
+
+scriptToMockFailure: &scriptToMockFailure
+  config:
+    platform: linux
+    image_resource:
+      type: docker-image
+      source:
+        repository: busybox
+    run:
+      path: sh
+      args:
+      - -exc
+      - |
+        echo "Feigning failure"
+        exit 1;
+
+scriptToMockSuccess: &scriptToMockSuccess
+  config:
+    platform: linux
+    image_resource:
+      type: docker-image
+      source:
+        repository: busybox
+    run:
+      path: sh
+      args:
+      - -exc
+      - |
+        echo "Feigning success"
+        exit 0;
